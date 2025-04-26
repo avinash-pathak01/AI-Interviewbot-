@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interview Preparation Bot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 20px;
+    }
+
+    select, input[type="text"], textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    .chat-box {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 6px;
+      background-color: #f9f9f9;
+    }
+
+    .feedback {
+      margin-top: 10px;
+      color: #2c662d;
+      font-style: italic;
+    }
+
+    .summary {
+      background-color: #e6f7ff;
+      padding: 20px;
+      margin-top: 30px;
+      border-left: 6px solid #1890ff;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Interview Preparation Bot</h1>
+
+  <!-- Role & Domain -->
+  <label for="role">Select Job Role:</label>
+  <select id="role">
+    <option value="Software Engineer">Software Engineer</option>
+    <option value="Product Manager">Product Manager</option>
+    <option value="Data Analyst">Data Analyst</option>
+  </select>
+
+  <label for="domain">Specify Domain (optional):</label>
+  <input type="text" id="domain" placeholder="e.g., Frontend, Backend, ML">
+
+  <!-- Interview Mode -->
+  <label for="mode">Choose Interview Mode:</label>
+  <select id="mode">
+    <option value="Technical">Technical Interview</option>
+    <option value="Behavioral">Behavioral Interview</option>
+  </select>
+
+  <button onclick="startInterview()">Start Interview</button>
+
+  <!-- Chat Interface -->
+  <div id="chat" class="chat-box" style="display:none;">
+    <p><strong>Bot:</strong> <span id="question"></span></p>
+    <textarea id="answer" rows="4" placeholder="Your answer..."></textarea><br/>
+    <button onclick="submitAnswer()">Submit</button>
+    <button onclick="retryAnswer()">Retry</button>
+    <button onclick="skipQuestion()">Skip</button>
+
+    <div id="feedback" class="feedback" style="display:none;">
+      Feedback: <span id="feedback-text"></span>
+    </div>
+  </div>
+
+  <!-- Final Summary -->
+  <div id="summary" class="summary" style="display:none;">
+    <h3>Interview Summary</h3>
+    <p><strong>Strengths:</strong> Clear communication, strong technical vocabulary.</p>
+    <p><strong>Areas to Improve:</strong> Provide more real-world examples and structure.</p>
+    <p><strong>Final Score:</strong> 7.5 / 10</p>
+    <p><strong>Resources:</strong> Grokking System Design, LeetCode, Behavioral STAR Tips</p>
+    <button>Download Summary</button>
+  </div>
+</div>
+
+<script>
+  const questionBank = {
+    "Software Engineer": {
+      Technical: [
+        "Explain the difference between multithreading and multiprocessing.",
+        "How would you design a scalable backend API for an e-commerce site?",
+        "What is a memory leak? How do you detect and fix it?",
+        "What are the pros and cons of microservices?",
+        "How do you ensure your code is testable and maintainable?"
+      ],
+      Behavioral: [
+        "Tell me about a time you debugged a critical issue under pressure.",
+        "How do you approach working with product or design teams?",
+        "Describe a technical decision you made that had a big impact.",
+        "Give an example of how you handled a code review disagreement.",
+        "Tell me about a failed project and what you learned."
+      ]
+    },
+    "Product Manager": {
+      Technical: [
+        "How do you gather and prioritize feature requirements?",
+        "How do you work with engineering to estimate development time?",
+        "Explain how you use metrics to drive product decisions.",
+        "How do you handle technical debt in roadmap planning?",
+        "What tools do you use for sprint planning and backlog grooming?"
+      ],
+      Behavioral: [
+        "Describe a time when you managed conflicting stakeholder interests.",
+        "Tell me about a successful product you launched and your role.",
+        "How do you handle pushback from engineers or designers?",
+        "Give an example of how you led a cross-functional team.",
+        "Talk about a mistake in product direction and what you learned."
+      ]
+    },
+    "Data Analyst": {
+      Technical: [
+        "How do you approach cleaning and preprocessing large datasets?",
+        "Explain the difference between inner and outer joins with examples.",
+        "What is the purpose of A/B testing and how do you set it up?",
+        "How do you handle missing data in a dataset?",
+        "Describe a SQL query you wrote to solve a real business problem."
+      ],
+      Behavioral: [
+        "Tell me about a time your data insights changed a business decision.",
+        "How do you explain complex data findings to non-technical stakeholders?",
+        "Give an example of how you handled conflicting data sources.",
+        "Describe a project where you had to learn a new tool or method quickly.",
+        "How do you prioritize multiple data requests from different teams?"
+      ]
+    }
+  };
+
+  let currentQuestion = 0;
+  let selectedQuestions = [];
+
+  function startInterview() {
+    const role = document.getElementById("role").value;
+    const mode = document.getElementById("mode").value;
+    selectedQuestions = questionBank[role][mode].slice(0, 5);
+    currentQuestion = 0;
+    document.getElementById("chat").style.display = "block";
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    document.getElementById("question").innerText = selectedQuestions[currentQuestion];
+    document.getElementById("answer").value = "";
+    document.getElementById("feedback").style.display = "none";
+  }
+
+  function submitAnswer() {
+    const answer = document.getElementById("answer").value;
+    if (!answer.trim()) return alert("Please provide an answer.");
+
+    // Simulated feedback
+    document.getElementById("feedback-text").innerText = "Great answer! Try to structure it with a real example for more impact.";
+    document.getElementById("feedback").style.display = "block";
+
+    // Delay and go to next question
+    setTimeout(() => {
+      currentQuestion++;
+      if (currentQuestion < selectedQuestions.length) {
+        loadQuestion();
+      } else {
+        document.getElementById("chat").style.display = "none";
+        document.getElementById("summary").style.display = "block";
+      }
+    }, 3000);
+  }
+
+  function retryAnswer() {
+    document.getElementById("answer").value = "";
+    document.getElementById("feedback").style.display = "none";
+  }
+
+  function skipQuestion() {
+    currentQuestion++;
+    if (currentQuestion < selectedQuestions.length) {
+      loadQuestion();
+    } else {
+      document.getElementById("chat").style.display = "none";
+      document.getElementById("summary").style.display = "block";
+    }
+  }
+</script>
+
+</body>
+</html>
